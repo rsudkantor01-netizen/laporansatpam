@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "exportedAt": "2025-11-16T04:57:11.526Z",
+    "version": "1.0",
+    "source": "RSUD Talaud - Sistem Laporan Satpam (HTML Standalone)"
+  },
+  "satpams": [
+    {
+      "id": "satpam_1763268994514_0",
+      "nama": "noldi",
+      "createdAt": "2025-11-16T04:56:34.515Z",
+      "updatedAt": "2025-11-16T04:56:34.515Z",
+      "totalLaporan": 1
+    },
+    {
+      "id": "satpam_1763268994515_1",
+      "nama": "jupri",
+      "createdAt": "2025-11-16T04:56:34.515Z",
+      "updatedAt": "2025-11-16T04:56:34.515Z",
+      "totalLaporan": 0
+    },
+    {
+      "id": "satpam_1763268994515_2",
+      "nama": "michael",
+      "createdAt": "2025-11-16T04:56:34.515Z",
+      "updatedAt": "2025-11-16T04:56:34.515Z",
+      "totalLaporan": 0
+    },
+    {
+      "id": "satpam_1763268994515_3",
+      "nama": "juniarti",
+      "createdAt": "2025-11-16T04:56:34.515Z",
+      "updatedAt": "2025-11-16T04:56:34.515Z",
+      "totalLaporan": 0
+    },
+    {
+      "id": "satpam_1763268994515_4",
+      "nama": "andriski",
+      "createdAt": "2025-11-16T04:56:34.515Z",
+      "updatedAt": "2025-11-16T04:56:34.515Z",
+      "totalLaporan": 0
+    },
+    {
+      "id": "satpam_1763268994515_5",
+      "nama": "fransisco",
+      "createdAt": "2025-11-16T04:56:34.515Z",
+      "updatedAt": "2025-11-16T04:56:34.515Z",
+      "totalLaporan": 0
+    }
+  ],
+  "laporan": [
+    {
+      "id": "laporan_1763269026351",
+      "satpamId": "satpam_1763268994514_0",
+      "tanggal": "2025-11-16",
+      "shift": "pagi",
+      "kejadian": "aman",
+      "tindakan": "aman",
+      "lokasi": "igd",
+      "keterangan": "aman",
+      "createdAt": "2025-11-16T04:57:06.351Z",
+      "updatedAt": "2025-11-16T04:57:06.351Z",
+      "satpamNama": "noldi"
+    }
+  ],
+  "statistics": {
+    "totalSatpams": 6,
+    "totalLaporan": 1,
+    "laporanByShift": {
+      "pagi": 1
+    },
+    "latestLaporan": "2025-11-16"
+  }
+}

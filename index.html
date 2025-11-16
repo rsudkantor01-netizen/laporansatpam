@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Satpam RSUD Talaud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app" class="min-h-screen">
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="flex items-center justify-center min-h-screen">
+            <div class="text-center">
+                <div class="spinner mx-auto mb-4"></div>
+                <p class="text-gray-600">Memuat aplikasi...</p>
+            </div>
+        </div>
+
+        <!-- Main App (Hidden initially) -->
+        <div id="mainApp" class="hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-sm p-6 mb-6">
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                                <i class="fas fa-shield-alt text-blue-600"></i>
+                                Laporan Satpam RSUD Talaud
+                            </h1>
+                            <p class="text-gray-600 mt-2">Sistem manajemen laporan keamanan rumah sakit</p>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="exportData()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                                <i class="fas fa-download"></i>
+                                Export JSON
+                            </button>
+                            <div class="relative">
+                                <input type="file" id="importFile" accept=".json" onchange="importData(event)" class="hidden">
+                                <button onclick="document.getElementById('importFile').click()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                                    <i class="fas fa-upload"></i>
+                                    Import JSON
+                                </button>
+                            </div>
+                            <button onclick="loadData()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                                <i class="fas fa-sync-alt"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Sync Status -->
+                    <div id="syncStatus" class="mt-4 hidden">
+                        <div class="p-3 rounded-lg flex items-center gap-2">
+                            <span id="syncIcon"></span>
+                            <span id="syncMessage"></span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="max-w-7xl mx-auto px-4 pb-8">
+                <!-- Tabs -->
+                <div class="bg-white rounded-lg shadow-sm mb-6">
+                    <div class="border-b border-gray-200">
+                        <nav class="flex -mb-px">
+                            <button onclick="switchTab('laporan')" id="laporanTab" class="px-6 py-3 border-b-2 border-blue-500 text-blue-600 font-medium">
+                                <i class="fas fa-file-alt mr-2"></i>
+                                Data Laporan
+                            </button>
+                            <button onclick="switchTab('satpam')" id="satpamTab" class="px-6 py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-users mr-2"></i>
+                                Data Satpam
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Laporan Tab Content -->
+                <div id="laporanContent" class="space-y-6">
+                    <div class="bg-white rounded-lg shadow-sm">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h2 class="text-xl font-semibold">Daftar Laporan</h2>
+                                    <p class="text-gray-600">Histori laporan keamanan satpam</p>
+                                </div>
+                                <button onclick="openLaporanModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    Tambah Laporan
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="border-b border-gray-200">
+                                            <th class="text-left py-3 px-4 font-medium text-gray-700">Tanggal</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-700">Nama Satpam</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-700">Shift</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-700">Lokasi</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-700">Kejadian</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-700">Tindakan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="laporanTableBody">
+                                        <!-- Data akan diisi dengan JavaScript -->
+                                    </tbody>
+                                </table>
+                                <div id="emptyLaporanMessage" class="text-center py-8 text-gray-500 hidden">
+                                    Belum ada data laporan
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Satpam Tab Content -->
+                <div id="satpamContent" class="hidden">
+                    <div class="bg-white rounded-lg shadow-sm">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-xl font-semibold">Data Satpam</h2>
+                            <p class="text-gray-600">Daftar nama satpam RSUD Talaud</p>
+                        </div>
+                        <div class="p-6">
+                            <div id="satpamGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Data akan diisi dengan JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Laporan Modal -->
+        <div id="laporanModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-xl font-semibold">Tambah Laporan Baru</h3>
+                    <p class="text-gray-600">Isi form laporan keamanan</p>
+                </div>
+                <form id="laporanForm" class="p-6 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Satpam</label>
+                            <select id="satpamSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                <option value="">Pilih satpam</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                            <input type="date" id="tanggalInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Shift</label>
+                            <select id="shiftSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                <option value="">Pilih shift</option>
+                                <option value="pagi">Pagi</option>
+                                <option value="sore">Sore</option>
+                                <option value="malam">Malam</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
+                            <input type="text" id="lokasiInput" placeholder="Contoh: Ruang UGD, Pintu Utama" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kejadian</label>
+                        <textarea id="kejadianInput" placeholder="Deskripsi kejadian yang terjadi" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tindakan</label>
+                        <textarea id="tindakanInput" placeholder="Tindakan yang telah dilakukan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan Tambahan</label>
+                        <textarea id="keteranganInput" placeholder="Keterangan atau informasi tambahan" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-4">
+                        <button type="button" onclick="closeLaporanModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            Simpan Laporan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Storage (Local Storage untuk HTML standalone)
+        const STORAGE_KEY = 'laporanSatpamData';
+        
+        // Initial Data
+        const satpamNames = ['noldi', 'jupri', 'michael', 'juniarti', 'andriski', 'fransisco'];
+        
+        // Initialize App
+        let appData = {
+            satpams: [],
+            laporan: []
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // Load data from localStorage
+            const storedData = localStorage.getItem(STORAGE_KEY);
+            if (storedData) {
+                appData = JSON.parse(storedData);
+            } else {
+                // Initialize with default satpam data
+                appData.satpams = satpamNames.map((nama, index) => ({
+                    id: 'satpam_' + Date.now() + '_' + index,
+                    nama: nama,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                }));
+                saveData();
+            }
+            
+            // Set today's date as default
+            document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
+            
+            // Populate satpam select
+            populateSatpamSelect();
+            
+            // Load and display data
+            loadData();
+            
+            // Show main app, hide loading
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        }
+
+        function populateSatpamSelect() {
+            const select = document.getElementById('satpamSelect');
+            select.innerHTML = '<option value="">Pilih satpam</option>';
+            appData.satpams.forEach(satpam => {
+                const option = document.createElement('option');
+                option.value = satpam.id;
+                option.textContent = satpam.nama;
+                select.appendChild(option);
+            });
+        }
+
+        function loadData() {
+            displayLaporan();
+            displaySatpams();
+        }
+
+        function displayLaporan() {
+            const tbody = document.getElementById('laporanTableBody');
+            const emptyMessage = document.getElementById('emptyLaporanMessage');
+            
+            if (appData.laporan.length === 0) {
+                tbody.innerHTML = '';
+                emptyMessage.classList.remove('hidden');
+                return;
+            }
+            
+            emptyMessage.classList.add('hidden');
+            tbody.innerHTML = appData.laporan.map(item => {
+                const satpam = appData.satpams.find(s => s.id === item.satpamId);
+                const shiftColors = {
+                    pagi: 'bg-green-100 text-green-800',
+                    sore: 'bg-orange-100 text-orange-800',
+                    malam: 'bg-blue-100 text-blue-800'
+                };
+                
+                return `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-clock text-gray-400"></i>
+                                ${new Date(item.tanggal).toLocaleDateString('id-ID')}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 font-medium">${satpam ? satpam.nama : 'Unknown'}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${shiftColors[item.shift] || 'bg-gray-100 text-gray-800'}">
+                                ${item.shift.charAt(0).toUpperCase() + item.shift.slice(1)}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            ${item.lokasi ? `
+                                <div class="flex items-center gap-1">
+                                    <i class="fas fa-map-marker-alt text-gray-400 text-sm"></i>
+                                    ${item.lokasi}
+                                </div>
+                            ` : '-'}
+                        </td>
+                        <td class="py-3 px-4 max-w-xs truncate">${item.kejadian || '-'}</td>
+                        <td class="py-3 px-4 max-w-xs truncate">${item.tindakan || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function displaySatpams() {
+            const grid = document.getElementById('satpamGrid');
+            grid.innerHTML = appData.satpams.map(satpam => `
+                <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold">${satpam.nama}</h3>
+                        <p class="text-sm text-gray-500">Satpam RSUD Talaud</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(tab) {
+            // Update tab buttons
+            const laporanTab = document.getElementById('laporanTab');
+            const satpamTab = document.getElementById('satpamTab');
+            const laporanContent = document.getElementById('laporanContent');
+            const satpamContent = document.getElementById('satpamContent');
+            
+            if (tab === 'laporan') {
+                laporanTab.className = 'px-6 py-3 border-b-2 border-blue-500 text-blue-600 font-medium';
+                satpamTab.className = 'px-6 py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+                laporanContent.classList.remove('hidden');
+                satpamContent.classList.add('hidden');
+            } else {
+                satpamTab.className = 'px-6 py-3 border-b-2 border-blue-500 text-blue-600 font-medium';
+                laporanTab.className = 'px-6 py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+                satpamContent.classList.remove('hidden');
+                laporanContent.classList.add('hidden');
+            }
+        }
+
+        function openLaporanModal() {
+            document.getElementById('laporanModal').classList.remove('hidden');
+            document.getElementById('laporanModal').classList.add('fade-in');
+        }
+
+        function closeLaporanModal() {
+            document.getElementById('laporanModal').classList.add('hidden');
+            document.getElementById('laporanForm').reset();
+            document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
+        }
+
+        // Form submission
+        document.getElementById('laporanForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                id: 'laporan_' + Date.now(),
+                satpamId: document.getElementById('satpamSelect').value,
+                tanggal: document.getElementById('tanggalInput').value,
+                shift: document.getElementById('shiftSelect').value,
+                kejadian: document.getElementById('kejadianInput').value,
+                tindakan: document.getElementById('tindakanInput').value,
+                lokasi: document.getElementById('lokasiInput').value,
+                keterangan: document.getElementById('keteranganInput').value,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            // Add to data
+            appData.laporan.unshift(formData);
+            saveData();
+            
+            // Update display
+            displayLaporan();
+            
+            // Show success message
+            showSyncStatus('success', '✓ Laporan berhasil disimpan');
+            
+            // Close modal
+            closeLaporanModal();
+            
+            // Auto export
+            autoExport();
+        });
+
+        function showSyncStatus(type, message) {
+            const statusDiv = document.getElementById('syncStatus');
+            const statusMessage = document.getElementById('syncMessage');
+            const statusIcon = document.getElementById('syncIcon');
+            
+            statusDiv.classList.remove('hidden');
+            
+            const colors = {
+                success: 'bg-green-100 text-green-800',
+                error: 'bg-red-100 text-red-800',
+                syncing: 'bg-blue-100 text-blue-800'
+            };
+            
+            statusDiv.className = `mt-4 p-3 rounded-lg flex items-center gap-2 ${colors[type]}`;
+            statusMessage.textContent = message;
+            
+            if (type === 'syncing') {
+                statusIcon.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            } else {
+                statusIcon.innerHTML = '';
+            }
+            
+            setTimeout(() => {
+                statusDiv.classList.add('hidden');
+            }, 3000);
+        }
+
+        function exportData() {
+            showSyncStatus('syncing', 'Mengekspor data...');
+            
+            const exportData = {
+                metadata: {
+                    exportedAt: new Date().toISOString(),
+                    version: '1.0',
+                    source: 'RSUD Talaud - Sistem Laporan Satpam (HTML Standalone)'
+                },
+                satpams: appData.satpams.map(satpam => ({
+                    ...satpam,
+                    totalLaporan: appData.laporan.filter(l => l.satpamId === satpam.id).length
+                })),
+                laporan: appData.laporan.map(lap => {
+                    const satpam = appData.satpams.find(s => s.id === lap.satpamId);
+                    return {
+                        ...lap,
+                        satpamNama: satpam ? satpam.nama : 'Unknown'
+                    };
+                }),
+                statistics: {
+                    totalSatpams: appData.satpams.length,
+                    totalLaporan: appData.laporan.length,
+                    laporanByShift: appData.laporan.reduce((acc, lap) => {
+                        acc[lap.shift] = (acc[lap.shift] || 0) + 1;
+                        return acc;
+                    }, {}),
+                    latestLaporan: appData.laporan.length > 0 ? appData.laporan[0].tanggal : null
+                }
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `laporan-satpam-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            showSyncStatus('success', '✓ Data berhasil diekspor');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.name.endsWith('.json')) {
+                showSyncStatus('error', '✗ Hanya file JSON yang diperbolehkan');
+                return;
+            }
+            
+            showSyncStatus('syncing', 'Mengimpor data...');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    if (importedData.satpams && importedData.laporan) {
+                        // Merge data
+                        appData.satpams = [...appData.satpams, ...importedData.satpams];
+                        appData.laporan = [...appData.laporan, ...importedData.laporan];
+                        
+                        // Remove duplicates based on ID
+                        appData.satpams = Array.from(new Map(appData.satpams.map(s => [s.id, s])).values());
+                        appData.laporan = Array.from(new Map(appData.laporan.map(l => [l.id, l])).values());
+                        
+                        saveData();
+                        loadData();
+                        populateSatpamSelect();
+                        
+                        showSyncStatus('success', `✓ Berhasil mengimpor ${importedData.satpams.length} satpam dan ${importedData.laporan.length} laporan`);
+                    } else {
+                        showSyncStatus('error', '✗ Struktur JSON tidak valid');
+                    }
+                } catch (error) {
+                    showSyncStatus('error', '✗ Gagal membaca file JSON');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+
+        function autoExport() {
+            // Create auto-export file for online access
+            const exportData = {
+                metadata: {
+                    exportedAt: new Date().toISOString(),
+                    version: '1.0',
+                    source: 'RSUD Talaud - Sistem Laporan Satpam (Auto Export)',
+                    autoTrigger: 'new_laporan'
+                },
+                satpams: appData.satpams.map(satpam => ({
+                    ...satpam,
+                    totalLaporan: appData.laporan.filter(l => l.satpamId === satpam.id).length
+                })),
+                laporan: appData.laporan.map(lap => {
+                    const satpam = appData.satpams.find(s => s.id === lap.satpamId);
+                    return {
+                        ...lap,
+                        satpamNama: satpam ? satpam.nama : 'Unknown'
+                    };
+                }),
+                statistics: {
+                    totalSatpams: appData.satpams.length,
+                    totalLaporan: appData.laporan.length,
+                    laporanByShift: appData.laporan.reduce((acc, lap) => {
+                        acc[lap.shift] = (acc[lap.shift] || 0) + 1;
+                        return acc;
+                    }, {}),
+                    latestLaporan: appData.laporan.length > 0 ? appData.laporan[0].tanggal : null
+                }
+            };
+            
+            // Save to localStorage for online access simulation
+            localStorage.setItem('laporanSatpamLatest', JSON.stringify(exportData));
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('laporanModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLaporanModal();
+            }
+        });
+    </script>
+</body>
+</html>
